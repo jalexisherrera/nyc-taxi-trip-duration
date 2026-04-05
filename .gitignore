@@ -1,0 +1,14 @@
+# Datos y artefactos grandes (descargar / generar localmente)
+fase-1/data/*.csv
+fase-1/model/*.joblib
+
+# Jupyter
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
