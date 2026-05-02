@@ -1,6 +1,9 @@
 # Datos y artefactos grandes (descargar / generar localmente)
 fase-1/data/*.csv
 fase-1/model/*.joblib
+fase-2/data/*.csv
+fase-2/model/*.joblib
+fase-2/output/*.csv
 
 # Jupyter
 .ipynb_checkpoints/

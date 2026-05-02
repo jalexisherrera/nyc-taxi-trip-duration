@@ -1,0 +1,8 @@
+services:
+  taxi:
+    build: .
+    image: nyc-taxi-fase2
+    volumes:
+      - ./data:/app/data:Z
+      - ./model:/app/model:Z
+      - ./output:/app/output:Z
