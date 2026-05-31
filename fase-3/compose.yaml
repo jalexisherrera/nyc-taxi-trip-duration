@@ -1,0 +1,14 @@
+services:
+  taxi-api:
+    build: .
+    image: nyc-taxi-fase3
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data:Z
+      - ./model:/app/model:Z
+      - ./output:/app/output:Z
+    environment:
+      - MODEL_PATH=/app/model/taxi_model.joblib
+      - FEATURES_PATH=/app/model/features.joblib
+      - TRAIN_CSV=/app/data/train.csv

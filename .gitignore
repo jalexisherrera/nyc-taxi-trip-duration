@@ -1,9 +1,12 @@
-# Datos y artefactos grandes (descargar / generar localmente)
+# Datos Kaggle y artefactos ML (generar o copiar en local; no subir a GitHub)
 fase-1/data/*.csv
 fase-1/model/*.joblib
 fase-2/data/*.csv
 fase-2/model/*.joblib
 fase-2/output/*.csv
+fase-3/data/*.csv
+fase-3/model/*.joblib
+fase-3/output/*
 
 # Jupyter
 .ipynb_checkpoints/

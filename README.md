@@ -10,19 +10,52 @@ Proyecto de Machine Learning para predecir la duración en segundos de viajes en
 
 ```text
 fase-1/
-├── data/              # train.csv de Kaggle (no versionado; ver Fase 1)
-├── model/             # artefactos generados por el notebook (no versionados)
+├── data/              # train.csv de Kaggle (local; ver abajo)
+├── model/             # taxi_model.joblib, features.joblib (local)
 ├── notebooks/
 │   └── modelo_taxi.ipynb
 └── requirements.txt
 fase-2/
+├── data/              # copia local de train.csv e input.csv para Docker
+├── model/             # artefactos tras train.py (local)
+├── output/            # predictions.csv (local)
 ├── Dockerfile
 ├── compose.yaml
 ├── Makefile
 ├── train.py
 ├── predict.py
 └── requirements.txt
+fase-3/
+├── data/              # train.csv solo si usas POST /train (local)
+├── model/             # copia del modelo para la API (local)
+├── output/
+├── Dockerfile
+├── compose.yaml
+├── Makefile
+├── apirest.py
+├── client.py
+├── train.py
+├── predict.py
+└── requirements.txt
 ```
+
+### Datos y modelos en local (no van a GitHub)
+
+El `.gitignore` excluye CSV grandes, `.joblib` y salidas generadas. En Git solo queda el **codigo** y el notebook.
+
+1. Descarga **una vez** `train.csv` de [Kaggle](https://www.kaggle.com/competitions/nyc-taxi-trip-duration/data) en `fase-1/data/train.csv`.
+2. Para Fase 2 o Fase 3 dentro de contenedor, **copia** el archivo (no uses symlink: el volumen Docker no ve rutas fuera de `./data`):
+
+   ```bash
+   cp fase-1/data/train.csv fase-2/data/train.csv
+   cp fase-1/data/train.csv fase-3/data/train.csv   # solo si usarás POST /train
+   ```
+
+3. Tras entrenar en Fase 2, copia el modelo a Fase 3 si levantas la API:
+
+   ```bash
+   cp fase-2/model/*.joblib fase-3/model/
+   ```
 
 ## Fase 1 — Modelo predictivo
 
@@ -105,9 +138,17 @@ docker build -t nyc-taxi-fase2 .
 
 ### 2) Entrenar dentro del contenedor
 
-Coloca `train.csv` en `fase-2/data/train.csv` y ejecuta:
+Copia el CSV de Kaggle y entrena (con Podman Compose en Fedora):
 
 ```bash
+cp ../fase-1/data/train.csv data/train.csv
+make compose-train
+```
+
+Equivalente con Docker directo:
+
+```bash
+cp ../fase-1/data/train.csv data/train.csv
 make train
 ```
 
@@ -174,8 +215,67 @@ Nota: en Fedora con SELinux, `compose.yaml` ya incluye `:Z` en los volumenes par
 - El contenedor ya crea `/app/data`, `/app/model` y `/app/output` automaticamente.
 - Tus archivos reales viven en tu maquina local (`fase-2/data`, `fase-2/model`, `fase-2/output`) y se conectan al contenedor con `-v`.
 - El `ENTRYPOINT ["python"]` permite ejecutar scripts mas corto (`train.py` y `predict.py`) sin escribir `python` cada vez.
-- Puedes ver todos los comandos disponibles con:
+- Puedes ver todos los comandos disponibles con `make help` (desde `fase-2/`).
 
-  ```bash
-  make help
-  ```
+## Fase 3 — API REST
+
+Expone el mismo modelo de Fase 2 mediante Flask:
+
+| Metodo | Ruta      | Descripcion                          |
+|--------|-----------|--------------------------------------|
+| GET    | `/health` | Estado de la API y si hay modelo     |
+| POST   | `/predict`| Prediccion JSON de un viaje          |
+| POST   | `/train`  | Reentrenamiento en segundo plano     |
+
+### Requisitos previos
+
+1. Artefactos en `fase-3/model/` (`cp ../fase-2/model/*.joblib model/` tras Fase 2, o `POST /train` con CSV en `fase-3/data/`).
+2. Podman o Docker con compose (mismos volumenes `:Z` que en Fase 2 para Fedora/SELinux).
+
+### Arranque rapido (Podman)
+
+```bash
+cd fase-3
+cp ../fase-2/model/*.joblib model/
+make build
+make up
+make health
+make predict-cli
+```
+
+Para reentrenar por API: `cp ../fase-1/data/train.csv data/train.csv` y luego `make train-api` (tarda varios minutos con el CSV completo).
+
+La API queda en `http://localhost:5000`.
+
+### Cliente Python de ejemplo
+
+Con la API en marcha:
+
+```bash
+cd fase-3
+pip install requests
+python client.py
+```
+
+### Ejemplo curl `/predict`
+
+```bash
+curl -X POST http://localhost:5000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vendor_id": 1,
+    "passenger_count": 2,
+    "pickup_longitude": -73.982155,
+    "pickup_latitude": 40.767937,
+    "dropoff_longitude": -73.964630,
+    "dropoff_latitude": 40.765602,
+    "pickup_datetime": "2016-06-10 09:15:00"
+  }'
+```
+
+### Detener la API
+
+```bash
+cd fase-3
+make down
+```
