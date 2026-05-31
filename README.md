@@ -72,6 +72,8 @@ El `.gitignore` excluye CSV grandes, `.joblib` y salidas generadas. En Git solo 
 
 4. Abre y ejecuta el notebook `fase-1/notebooks/modelo_taxi.ipynb` (desde la raíz del repo o desde `fase-1/`; el notebook localiza solo `fase-1/`).
 
+**Nota sobre el tamano del dataset:** el notebook carga solo las primeras **100 000 filas** (`nrows=100_000`) para acelerar la exploracion y el entrenamiento en un portatil. Puedes quitar ese parametro o aumentarlo si tienes mas RAM; Fase 2 usa el CSV completo (~1,45 M filas) dentro del contenedor.
+
 Al final se guardan `fase-1/model/taxi_model.joblib` y `fase-1/model/features.joblib`, listos para la Fase 2.
 
 ## Fase 2 - Despliegue en contenedor Docker
@@ -166,6 +168,37 @@ docker run --rm \
 ```
 
 ### 3) Predecir dentro del contenedor
+
+#### Crear `input.csv`
+
+`predict.py` espera un CSV **sin** la columna `trip_duration` (solo features de entrada). Columnas obligatorias:
+
+| Columna | Tipo | Descripcion |
+|---------|------|-------------|
+| `vendor_id` | entero | Identificador del proveedor del taxi |
+| `passenger_count` | entero | Numero de pasajeros |
+| `pickup_datetime` | texto/fecha | Fecha y hora de recogida (`YYYY-MM-DD HH:MM:SS`) |
+| `pickup_longitude` | float | Longitud del punto de recogida |
+| `pickup_latitude` | float | Latitud del punto de recogida |
+| `dropoff_longitude` | float | Longitud del destino |
+| `dropoff_latitude` | float | Latitud del destino |
+
+Ejemplo rapido a partir de `train.csv` (toma 5 filas y elimina columnas que no usa la inferencia):
+
+```bash
+cd fase-2
+python - <<'PY'
+import pandas as pd
+cols = [
+    "id", "vendor_id", "passenger_count", "pickup_datetime",
+    "pickup_longitude", "pickup_latitude",
+    "dropoff_longitude", "dropoff_latitude",
+]
+df = pd.read_csv("../fase-1/data/train.csv", nrows=5)[cols]
+df.to_csv("data/input.csv", index=False)
+print("Creado data/input.csv con", len(df), "filas")
+PY
+```
 
 Coloca tu archivo de entrada en `fase-2/data/input.csv` y ejecuta:
 

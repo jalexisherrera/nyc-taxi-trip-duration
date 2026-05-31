@@ -95,6 +95,7 @@ def build_training_frame(raw_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def train_model(train_csv: Path, model_path: Path, features_path: Path, test_size: float) -> None:
+    """Entrena el pipeline, evalua metricas en hold-out y guarda modelo y features."""
     raw_df = pd.read_csv(train_csv)
     df = build_training_frame(raw_df)
     if df.empty:
@@ -146,6 +147,7 @@ def train_model(train_csv: Path, model_path: Path, features_path: Path, test_siz
 
 
 def parse_args() -> argparse.Namespace:
+    """Define y parsea los argumentos de linea de comandos."""
     parser = argparse.ArgumentParser(description="Reentrena modelo NYC Taxi y guarda artefactos en disco.")
     parser.add_argument("--train-csv", required=True, type=Path, help="Ruta al CSV con datos de entrenamiento.")
     parser.add_argument("--model-out", type=Path, default=Path("model/taxi_model.joblib"), help="Ruta salida modelo.")
@@ -160,6 +162,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Punto de entrada CLI: entrena y persiste artefactos segun argumentos."""
     args = parse_args()
     train_model(args.train_csv, args.model_out, args.features_out, args.test_size)
 

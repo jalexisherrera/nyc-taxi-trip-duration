@@ -25,6 +25,7 @@ def haversine_distance(lat1: pd.Series, lon1: pd.Series, lat2: pd.Series, lon2: 
 
 
 def build_prediction_frame(raw_df: pd.DataFrame) -> pd.DataFrame:
+    """Valida columnas de entrada y construye features para inferencia."""
     required_cols = [
         "vendor_id",
         "passenger_count",
@@ -60,6 +61,7 @@ def build_prediction_frame(raw_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_prediction(input_csv: Path, output_csv: Path, model_path: Path, features_path: Path) -> None:
+    """Genera predicciones por fila y escribe CSV con predicted_trip_duration."""
     model = joblib.load(model_path)
     features = joblib.load(features_path)
 
@@ -84,6 +86,7 @@ def run_prediction(input_csv: Path, output_csv: Path, model_path: Path, features
 
 
 def parse_args() -> argparse.Namespace:
+    """Define y parsea los argumentos de linea de comandos."""
     parser = argparse.ArgumentParser(description="Realiza predicciones de trip_duration desde un CSV de entrada.")
     parser.add_argument("--input-csv", required=True, type=Path, help="Ruta al CSV con datos de entrada.")
     parser.add_argument(
@@ -103,6 +106,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Punto de entrada CLI: carga modelo y escribe archivo de predicciones."""
     args = parse_args()
     run_prediction(args.input_csv, args.output_csv, args.model_path, args.features_path)
 

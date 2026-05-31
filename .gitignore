@@ -6,7 +6,7 @@ fase-2/model/*.joblib
 fase-2/output/*.csv
 fase-3/data/*.csv
 fase-3/model/*.joblib
-fase-3/output/*
+fase-3/output/*.csv
 
 # Jupyter
 .ipynb_checkpoints/

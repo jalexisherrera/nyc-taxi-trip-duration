@@ -42,12 +42,14 @@ _train_state = {
 
 
 def _load_model_from_disk() -> tuple[object | None, list[str] | None]:
+    """Lee pipeline y lista de features desde disco si existen los archivos."""
     if not MODEL_PATH.is_file() or not FEATURES_PATH.is_file():
         return None, None
     return joblib.load(MODEL_PATH), joblib.load(FEATURES_PATH)
 
 
 def get_model() -> tuple[object | None, list[str] | None]:
+    """Devuelve el modelo en memoria, cargandolo desde disco la primera vez."""
     global _pipeline, _features
     with _model_lock:
         if _pipeline is None:
@@ -56,6 +58,7 @@ def get_model() -> tuple[object | None, list[str] | None]:
 
 
 def reload_model() -> tuple[object | None, list[str] | None]:
+    """Fuerza recarga del modelo desde disco (tras un reentrenamiento)."""
     global _pipeline, _features
     with _model_lock:
         _pipeline, _features = _load_model_from_disk()
@@ -63,6 +66,7 @@ def reload_model() -> tuple[object | None, list[str] | None]:
 
 
 def _run_training_job() -> None:
+    """Ejecuta entrenamiento en hilo de fondo y actualiza estado compartido."""
     global _train_state
     try:
         train_model(TRAIN_CSV, MODEL_PATH, FEATURES_PATH, test_size=0.2)
@@ -78,20 +82,22 @@ def _run_training_job() -> None:
 
 @app.get("/health")
 def health():
-  pipeline, features = get_model()
-  return jsonify(
-      {
-          "status": "ok",
-          "model_loaded": pipeline is not None and features is not None,
-          "training_running": _train_state["running"],
-          "last_training_error": _train_state["error"],
-          "last_training_message": _train_state["message"],
-      }
-  )
+    """Indica si la API responde y si hay un modelo cargado en memoria."""
+    pipeline, features = get_model()
+    return jsonify(
+        {
+            "status": "ok",
+            "model_loaded": pipeline is not None and features is not None,
+            "training_running": _train_state["running"],
+            "last_training_error": _train_state["error"],
+            "last_training_message": _train_state["message"],
+        }
+    )
 
 
 @app.post("/predict")
 def predict():
+    """Predice la duracion de un viaje a partir de un JSON con las features de entrada."""
     pipeline, features = get_model()
     if pipeline is None or features is None:
         return jsonify({"error": "Modelo no encontrado. Entrena primero con POST /train."}), 503
@@ -118,6 +124,7 @@ def predict():
 
 @app.post("/train")
 def train():
+    """Inicia reentrenamiento asincrono usando el CSV configurado en TRAIN_CSV."""
     if not TRAIN_CSV.is_file():
         return jsonify({"error": f"No se encontro CSV de entrenamiento: {TRAIN_CSV}"}), 503
 

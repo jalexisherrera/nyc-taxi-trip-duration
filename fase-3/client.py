@@ -13,6 +13,7 @@ BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:5000")
 
 
 def check_health() -> dict:
+    """Consulta GET /health e imprime el estado de la API."""
     print("=== GET /health ===")
     response = requests.get(f"{BASE_URL}/health", timeout=30)
     data = response.json()
@@ -31,6 +32,7 @@ def predict_trip(
     dropoff_lat: float,
     pickup_datetime: str,
 ) -> dict:
+    """Envia POST /predict con un viaje de ejemplo e imprime la respuesta."""
     print("=== POST /predict ===")
     payload = {
         "vendor_id": vendor_id,
@@ -51,6 +53,7 @@ def predict_trip(
 
 
 def trigger_training() -> dict:
+    """Dispara POST /train para reentrenar el modelo en segundo plano."""
     print("=== POST /train ===")
     response = requests.post(f"{BASE_URL}/train", timeout=30)
     data = response.json()
@@ -61,6 +64,7 @@ def trigger_training() -> dict:
 
 
 def main() -> int:
+    """Ejecuta health check y una prediccion de ejemplo contra la API local."""
     health = check_health()
     if not health.get("model_loaded"):
         print("Advertencia: el modelo no esta cargado. POST /train o copia artefactos a fase-3/model/.")
